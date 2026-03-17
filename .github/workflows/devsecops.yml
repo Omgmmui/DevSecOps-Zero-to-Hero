@@ -1,27 +1,42 @@
-steps:
-  - name: Checkout code
-    uses: actions/checkout@v4
+name: DevSecOps Pipeline
 
-  - name: Login to GHCR
-    uses: docker/login-action@v3
-    with:
-      registry: ghcr.io
-      username: ${{ github.actor }}
-      password: ${{ secrets.GITHUB_TOKEN }}
+on:
+  push:
+    branches:
+      - main
 
-  - name: Debug files
-    run: ls -R
+jobs:
+  build-scan-push:
+    runs-on: ubuntu-latest
 
-  - name: Build Image
-    run: docker build -t ghcr.io/omgmmui/node-app:latest ./04-Container-Security
+    permissions:
+      contents: read
+      packages: write
 
-  - name: Scan Image (Trivy)
-    uses: aquasecurity/trivy-action@master
-    with:
-      image-ref: ghcr.io/omgmmui/node-app:latest
-      format: table
-      exit-code: 0
-      severity: HIGH,CRITICAL
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  - name: Push Image
-    run: docker push ghcr.io/omgmmui/node-app:latest
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug files
+        run: ls -R
+
+      - name: Build Image
+        run: docker build -t ghcr.io/omgmmui/node-app:latest ./04-Container-Security
+
+      - name: Scan Image (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/omgmmui/node-app:latest
+          format: table
+          exit-code: 0
+          severity: HIGH,CRITICAL
+
+      - name: Push Image
+        run: docker push ghcr.io/omgmmui/node-app:latest
